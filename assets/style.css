@@ -1,0 +1,30 @@
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+canvas {
+    background-color: #222;
+    width: 100%;
+    height: 100%
+}
+
+#toolbar-container {
+    position: fixed;
+    width: 100%;
+    height: 50px;
+    padding-top: 10px;
+    z-index: 2;
+}
+
+#toolbar {
+    margin: auto;
+    width: 60%;
+}
+
+canvas {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
