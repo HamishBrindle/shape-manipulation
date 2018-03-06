@@ -2,27 +2,45 @@
 Setup canvas ------------------------------------------------------------------>
  */
 
+const FRAME_RATE = 60;
+
 let canvas = document.getElementById('canvas');
 let context = canvas.getContext('2d');
 
 var width = canvas.width;
 var height = canvas.height;
 
-initialize();
-
+/**
+ * Initialize our canvas where we draw our shapes.
+ */
 function initialize() {
     window.addEventListener('resize', resizeCanvas, false);
     resizeCanvas();
-    setInterval(redraw, 300);
+    setInterval(redraw, FRAME_RATE);
 }
 
+/**
+ * Our draw function which carries out the drawing of the shapes
+ * on interval.
+ */
 function redraw() {
     context.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (isSpinningX)
+        rotX();
+    if (isSpinningY)
+        rotY(); 
+    if (isSpinningZ)
+        rotZ();
+
     if (isShapeLoaded) {
         drawShape();
     }
 }
 
+/**
+ * Resize the canvas when the dimensions of the browser window changes.
+ */
 function resizeCanvas() {
     width = window.innerWidth;
     height = window.innerHeight;
@@ -31,13 +49,18 @@ function resizeCanvas() {
     redraw();
 }
 
+initialize();
+
 
 /*
 Global Variables -------------------------------------------------------------->
  */
 
-// Original shape matrix
 var originalVertices = [];
+var anchorPoint = [];
+var newVertices = [];
+var newAnchorPoint = [];
+var shapeLines = [];
 
 var transformMatrix = [
     [1, 0, 0, 0],
@@ -46,18 +69,10 @@ var transformMatrix = [
     [0, 0, 0, 1]
 ];
 
-var anchorPoint = [];
-
-// Our new, affected vertices
-var newVertices = [];
-var newAnchorPoint = [];
-
-var shapeLines = [];
-
 var isShapeLoaded = false;
-
-var width;
-var height;
+var isSpinningX = false;
+var isSpinningY = false;
+var isSpinningZ = false;
 
 
 /*
@@ -70,6 +85,7 @@ const ZOOM_IN = 1.10;
 const ZOOM_OUT = 0.90;
 const TRANS_DIST = 10;
 const THETA = Math.PI / 50;
+const SHEAR = 0.05;
 
 const CENTER = [
     [1, 0, 0, width / 2],
@@ -136,11 +152,28 @@ function scale(s) {
     ];
 }
 
+function shear(s) {
+    return [
+        [1, s, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1]
+    ];
+}
+
+/**
+ * 
+ * @param {Starting Vertex} id1 
+ * @param {Ending Vertex} id2 
+ */
 function Line(id1, id2) {
     this.start = id1;
     this.end = id2;
 }
 
+/**
+ * Executes drawing of the shapes points with it's lines.
+ */
 function drawShape() {
 
     context.strokeStyle = '#ff9933';
@@ -160,99 +193,171 @@ function drawShape() {
 
 }
 
+/**
+ * Translate shape left.
+ */
 function translateLeft() {
-    console.log("Translate left");
     transformMatrix = multiplyMatrix(translation(-TRANS_DIST, 0, 0), transformMatrix);
     transformation();
 }
 
+/**
+ * Translate shape right.
+ */
 function translateRight() {
-    console.log("Translate right");
     transformMatrix = multiplyMatrix(translation(TRANS_DIST, 0, 0), transformMatrix);
     transformation();
 }
 
+/**
+ * Translate shape up.
+ */
 function translateUp() {
-    console.log("Translate up");
     transformMatrix = multiplyMatrix(translation(0, -TRANS_DIST, 0), transformMatrix);
     transformation();
 }
 
+/**
+ * Translate shape down.
+ */
 function translateDown() {
-    console.log("Translate down");
     transformMatrix = multiplyMatrix(translation(0, TRANS_DIST, 0), transformMatrix);
     transformation();
 }
 
+/**
+ * Scale the shape up as to zoom in.
+ */
 function zoomIn() {
-    console.log("Zoom in");
     transformMatrix = multiplyMatrix(ORIGIN, transformMatrix);
     transformMatrix = multiplyMatrix(scale(ZOOM_IN), transformMatrix);
     transformMatrix = multiplyMatrix(CENTER, transformMatrix);
     transformation();
 }
 
+/**
+ * Scale the shape down as to zoom out.
+ */
 function zoomOut() {
-    console.log("Zoom out");
     transformMatrix = multiplyMatrix(ORIGIN, transformMatrix);
     transformMatrix = multiplyMatrix(scale(ZOOM_OUT), transformMatrix);
     transformMatrix = multiplyMatrix(CENTER, transformMatrix);
     transformation();
 }
 
+/**
+ * When activated, spins the shape around the X-axis.
+ */
 function spinX() {
-    console.log("Spin X");
+    isSpinningX = !isSpinningX;
+    isSpinningY = false;
+    isSpinningZ = false;
 }
 
+/**
+ * When activated, spins the shape around the Y-axis.
+ */
 function spinY() {
-    console.log("Spin Y");
+    isSpinningX = false;
+    isSpinningY = !isSpinningY;
+    isSpinningZ = false;
 }
 
+/**
+ * When activated, spins the shape around the Z-axis.
+ */
 function spinZ() {
-    console.log("Spin Z");
+    isSpinningX = false;
+    isSpinningY = false;
+    isSpinningZ = !isSpinningZ;
 }
 
+/**
+ * Shear the top of the shape to the left.
+ */
 function shearLeft() {
-    console.log("Shear left");
+    transformMatrix = multiplyMatrix(ORIGIN, transformMatrix);
+    transformMatrix = multiplyMatrix(
+        translation(newAnchorPoint[0], newAnchorPoint[1], newAnchorPoint[2]),
+        transformMatrix
+    );
+    transformMatrix = multiplyMatrix(REFLECT_X, transformMatrix);
+    transformMatrix = multiplyMatrix(shear(-SHEAR), transformMatrix);
+    transformMatrix = multiplyMatrix(REFLECT_X, transformMatrix);    
+    transformMatrix = multiplyMatrix(
+        translation(-newAnchorPoint[0], -newAnchorPoint[1], -newAnchorPoint[2]),
+        transformMatrix
+    );
+    transformMatrix = multiplyMatrix(CENTER, transformMatrix);    
+    transformation();
 }
 
+/**
+ * Shear the top of the shape to the right.
+ */
 function shearRight() {
-    console.log("Shear right");
+    transformMatrix = multiplyMatrix(ORIGIN, transformMatrix);
+    transformMatrix = multiplyMatrix(
+        translation(newAnchorPoint[0], newAnchorPoint[1], newAnchorPoint[2]),
+        transformMatrix
+    );
+    transformMatrix = multiplyMatrix(REFLECT_X, transformMatrix);
+    transformMatrix = multiplyMatrix(shear(SHEAR), transformMatrix);
+    transformMatrix = multiplyMatrix(REFLECT_X, transformMatrix);    
+    transformMatrix = multiplyMatrix(
+        translation(-newAnchorPoint[0], -newAnchorPoint[1], -newAnchorPoint[2]),
+        transformMatrix
+    );
+    transformMatrix = multiplyMatrix(CENTER, transformMatrix);    
+    transformation();
 }
 
-function resetImage() {
-    console.log('Resetting Image');
-    transformMatrix = [
-        [1, 0, 0, 0],
-        [0, 1, 0, 0],
-        [0, 0, 1, 0],
-        [0, 0, 0, 1]
-    ];
-    init();
-}
-
+/**
+ * Rotate around the X-axis.
+ */
 function rotX() {
-    console.log("Rotate x");
     transformMatrix = multiplyMatrix(ORIGIN, transformMatrix);
     transformMatrix = multiplyMatrix(ROTATE_X, transformMatrix);
     transformMatrix = multiplyMatrix(CENTER, transformMatrix);
     transformation();
 }
 
+/**
+ * Rotate around the Y-axis.
+ */
 function rotY() {
-    console.log("Rotate y");
     transformMatrix = multiplyMatrix(ORIGIN, transformMatrix);
     transformMatrix = multiplyMatrix(ROTATE_Y, transformMatrix);
     transformMatrix = multiplyMatrix(CENTER, transformMatrix);
     transformation();
 }
 
+/**
+ * Rotate around the Z-axis.
+ */
 function rotZ() {
-    console.log("Rotate z");
     transformMatrix = multiplyMatrix(ORIGIN, transformMatrix);
     transformMatrix = multiplyMatrix(ROTATE_Z, transformMatrix);
     transformMatrix = multiplyMatrix(CENTER, transformMatrix);
     transformation();
+}
+
+/**
+ * Reset the shape and the transformation matrix back to it's
+ * initialized state.
+ */
+function resetImage() {
+    isShapeLoaded = false;    
+    transformMatrix = [
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1]
+    ];
+    isSpinningX = false;
+    isSpinningY = false;
+    isSpinningZ = false;
+    init();
 }
 
 
@@ -261,8 +366,10 @@ Initialization and Transformation functions
 ------------------------------------------------------------------------------->
  */
 
+ /**
+  * Initialize our shape with proper size and positioning (size decided by SCALE constant above)
+  */
 function init() {
-    console.log("Entering init");
 
     // Translate back by our anchor-point
     transformMatrix = multiplyMatrix(
@@ -280,9 +387,13 @@ function init() {
     transformMatrix = multiplyMatrix(CENTER, transformMatrix);
 
     transformation();
-    console.log("Leaving init");
+    
 }
 
+/**
+ * Called when performing transformations on our original vertices via
+ * the transformation matrix.
+ */
 function transformation() {
 
     isShapeLoaded = false;
@@ -291,7 +402,14 @@ function transformation() {
         newVertices[i] = multiplyMatrixAndPoint(originalVertices[i], transformMatrix);
     }
 
-    newAnchorPoint = multiplyMatrixAndPoint(anchorPoint, transformMatrix);
+    let scaleMatrix = [
+        [transformMatrix[0][0], 0, 0, 0],
+        [0, transformMatrix[1][1], 0, 0],
+        [0, 0, transformMatrix[2][2], 0],
+        [0, 0, 0, 1]
+    ];
+
+    newAnchorPoint = multiplyMatrixAndPoint(anchorPoint, scaleMatrix);    
 
     isShapeLoaded = true;
 
@@ -303,6 +421,11 @@ Matrix Multiplication
 ------------------------------------------------------------------------------>
  */
 
+ /**
+  * Multiply two matrices together (tested on 4x4 only).
+  * @param {LHS} mA 
+  * @param {RHS} mB 
+  */
 function multiplyMatrix(mA, mB) {
 
     var result = new Array(mA.length);
@@ -323,9 +446,14 @@ function multiplyMatrix(mA, mB) {
     return result;
 }
 
+/**
+ * 
+ * @param {Vertex} point 
+ * @param {4x4 Matrix} matrix 
+ */
 function multiplyMatrixAndPoint(point, matrix) {
 
-    //Give a simple variable name to each part of the matrix, a column and row number
+    // Assigning a variable name for each part of the matrix - a column and row number
     var c0r0 = matrix[0][0],
         c1r0 = matrix[1][0],
         c2r0 = matrix[2][0],
@@ -343,22 +471,22 @@ function multiplyMatrixAndPoint(point, matrix) {
         c2r3 = matrix[2][3],
         c3r3 = matrix[3][3];
 
-    //Now set some simple names for the point
+    // Now set some simple names for the point
     var x = point[0];
     var y = point[1];
     var z = point[2];
     var w = point[3];
 
-    //Multiply the point against each part of the 1st column, then add together
+    // Multiply the point against each part of the 1st column, then add together
     var resultX = (x * c0r0) + (y * c0r1) + (z * c0r2) + (w * c0r3);
 
-    //Multiply the point against each part of the 2nd column, then add together
+    // Multiply the point against each part of the 2nd column, then add together
     var resultY = (x * c1r0) + (y * c1r1) + (z * c1r2) + (w * c1r3);
 
-    //Multiply the point against each part of the 3rd column, then add together
+    // Multiply the point against each part of the 3rd column, then add together
     var resultZ = (x * c2r0) + (y * c2r1) + (z * c2r2) + (w * c2r3);
 
-    //Multiply the point against each part of the 4th column, then add together
+    // Multiply the point against each part of the 4th column, then add together
     var resultW = (x * c3r0) + (y * c3r1) + (z * c3r2) + (w * c3r3);
 
     return [resultX, resultY, resultZ, resultW];
@@ -370,17 +498,29 @@ function multiplyMatrixAndPoint(point, matrix) {
 Utilities -------------------------------------------------------------------->
  */
 
+ /**
+  * Put an async function call to sleep for however long. Need this for uploading
+  * the shape files.
+  * @param {Milliseconds} ms 
+  */
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+/**
+ * Upload two data files selected by user: one points file and one lines file.
+ * @param {File Upload} evt 
+ */
 async function handleFileSelect(evt) {
-
-    console.log('Entering handleFileSelect');
 
     let files = evt.target.files; // FileList object
     let points;
     let lines;
+
+    if (isShapeLoaded) {
+        originalVertices = [];
+        shapeLines = []; 
+    }
 
     for (let i = 0, f; f = files[i]; i++) {
 
@@ -390,7 +530,7 @@ async function handleFileSelect(evt) {
         reader.onload = (function(theFile) {
             return function(e) {
 
-                let lines = e.target.result.split('\n');
+                lines = e.target.result.split('\n');
 
                 // Checking the 'points' file
                 if (escape(theFile.name).includes('points')) {
@@ -424,10 +564,8 @@ async function handleFileSelect(evt) {
                         ]);
                     }
 
-                    // Checking the 'lines' file
+                // Checking the 'lines' file
                 } else if (escape(theFile.name).includes('lines')) {
-
-                    // console.log('lines file uploaded');
 
                     for (let line = 0; line < lines.length; line++) {
 
@@ -448,15 +586,14 @@ async function handleFileSelect(evt) {
             };
         })(f);
 
-        // Read in the image file as a data URL.
+        // Read in the shape file as a data URL.
         reader.readAsText(f);
     }
 
+    // Need this, just a timing issue that I was too lazy to figure out.
     await sleep(200);
 
-    init();
-
-    console.log('Leaving handleFileSelect');
+    resetImage();
 
 }
 
