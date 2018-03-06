@@ -2,7 +2,7 @@
 Setup canvas ------------------------------------------------------------------>
  */
 
-const FRAME_RATE = 60;
+const FRAME_RATE = 30;
 
 let canvas = document.getElementById('canvas');
 let context = canvas.getContext('2d');
@@ -26,11 +26,10 @@ function initialize() {
     setInterval(redraw, FRAME_RATE);
 
     // Line look and feel attributes
-    context.shadowBlur=20;
-    context.shadowColor="magenta";
+    context.shadowBlur = 60;
+    context.shadowColor = 'magenta';
     context.strokeStyle = 'magenta';
-    context.lineWidth = 2;
-
+    context.lineWidth = 4;
 }
 
 /**
@@ -383,6 +382,9 @@ Initialization and Transformation functions
   */
 function init() {
 
+    let shapeHeight = getShapeHeight();
+    let sc = (height / 2) / shapeHeight;
+
     // Translate back by our anchor-point
     transformMatrix = multiplyMatrix(
         translation(-anchorPoint[0], -anchorPoint[1], -anchorPoint[2]),
@@ -390,7 +392,7 @@ function init() {
     );
 
     // Scale
-    transformMatrix = multiplyMatrix(scale(SCALE), transformMatrix);
+    transformMatrix = multiplyMatrix(scale(sc), transformMatrix);
 
     // Reflect on the x-axis
     transformMatrix = multiplyMatrix(REFLECT_X, transformMatrix);
@@ -607,6 +609,36 @@ async function handleFileSelect(evt) {
 
     resetImage();
 
+}
+
+/**
+ * Gets the height of the shape.
+ */
+function getShapeHeight()
+{
+    // Init largest/smaller y to first points value.
+    var largest = originalVertices[0][1];
+    var smallest = originalVertices[0][1];
+
+    // Loop through all points.
+    for (var i = 0; i < originalVertices.length; i++)
+    {
+        // Check if larger.
+        if (originalVertices[i][1] >= largest)
+        {
+            largest = originalVertices[i][1];
+            continue;
+        }
+
+        // Check if smallest.
+        if (originalVertices[i][1] <= smallest)
+        {
+            smallest = originalVertices[i][1];
+        }
+    }
+
+    // Return height of the shape.
+    return largest - smallest;
 }
 
 
