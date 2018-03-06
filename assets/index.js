@@ -10,6 +10,13 @@ let context = canvas.getContext('2d');
 var width = canvas.width;
 var height = canvas.height;
 
+var imageObj = new Image();
+imageObj.onload = function() {
+    context.drawImage(imageObj, 0, 0, width, height);
+};
+imageObj.src = 'http://www.bullshift.net/data/images/2017/11/natewren-radpack-5.jpg';
+
+
 /**
  * Initialize our canvas where we draw our shapes.
  */
@@ -17,6 +24,13 @@ function initialize() {
     window.addEventListener('resize', resizeCanvas, false);
     resizeCanvas();
     setInterval(redraw, FRAME_RATE);
+
+    // Line look and feel attributes
+    context.shadowBlur=20;
+    context.shadowColor="magenta";
+    context.strokeStyle = 'magenta';
+    context.lineWidth = 2;
+
 }
 
 /**
@@ -25,6 +39,7 @@ function initialize() {
  */
 function redraw() {
     context.clearRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(imageObj, 0, 0, width, height);
 
     if (isSpinningX)
         rotX();
@@ -175,9 +190,6 @@ function Line(id1, id2) {
  * Executes drawing of the shapes points with it's lines.
  */
 function drawShape() {
-
-    context.strokeStyle = '#ff9933';
-    context.lineWidth = 1
 
     let s = newVertices;
     let l = shapeLines;
