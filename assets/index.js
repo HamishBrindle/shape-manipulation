@@ -208,6 +208,8 @@ function drawShape() {
  * Translate shape left.
  */
 function translateLeft() {
+    if (isSpinning())
+        stopSpinning();
     transformMatrix = multiplyMatrix(translation(-TRANS_DIST, 0, 0), transformMatrix);
     transformation();
 }
@@ -216,6 +218,8 @@ function translateLeft() {
  * Translate shape right.
  */
 function translateRight() {
+    if (isSpinning())
+        stopSpinning();
     transformMatrix = multiplyMatrix(translation(TRANS_DIST, 0, 0), transformMatrix);
     transformation();
 }
@@ -224,6 +228,8 @@ function translateRight() {
  * Translate shape up.
  */
 function translateUp() {
+    if (isSpinning())
+        stopSpinning();
     transformMatrix = multiplyMatrix(translation(0, -TRANS_DIST, 0), transformMatrix);
     transformation();
 }
@@ -232,6 +238,8 @@ function translateUp() {
  * Translate shape down.
  */
 function translateDown() {
+    if (isSpinning())
+        stopSpinning();
     transformMatrix = multiplyMatrix(translation(0, TRANS_DIST, 0), transformMatrix);
     transformation();
 }
@@ -240,6 +248,8 @@ function translateDown() {
  * Scale the shape up as to zoom in.
  */
 function zoomIn() {
+    if (isSpinning())
+        stopSpinning();
     transformMatrix = multiplyMatrix(ORIGIN, transformMatrix);
     transformMatrix = multiplyMatrix(scale(ZOOM_IN), transformMatrix);
     transformMatrix = multiplyMatrix(CENTER, transformMatrix);
@@ -250,6 +260,8 @@ function zoomIn() {
  * Scale the shape down as to zoom out.
  */
 function zoomOut() {
+    if (isSpinning())
+        stopSpinning();
     transformMatrix = multiplyMatrix(ORIGIN, transformMatrix);
     transformMatrix = multiplyMatrix(scale(ZOOM_OUT), transformMatrix);
     transformMatrix = multiplyMatrix(CENTER, transformMatrix);
@@ -287,6 +299,8 @@ function spinZ() {
  * Shear the top of the shape to the left.
  */
 function shearLeft() {
+    if (isSpinning())
+        stopSpinning();
     transformMatrix = multiplyMatrix(ORIGIN, transformMatrix);
     transformMatrix = multiplyMatrix(
         translation(newAnchorPoint[0], newAnchorPoint[1], newAnchorPoint[2]),
@@ -307,6 +321,8 @@ function shearLeft() {
  * Shear the top of the shape to the right.
  */
 function shearRight() {
+    if (isSpinning())
+        stopSpinning();
     transformMatrix = multiplyMatrix(ORIGIN, transformMatrix);
     transformMatrix = multiplyMatrix(
         translation(newAnchorPoint[0], newAnchorPoint[1], newAnchorPoint[2]),
@@ -365,9 +381,7 @@ function resetImage() {
         [0, 0, 1, 0],
         [0, 0, 0, 1]
     ];
-    isSpinningX = false;
-    isSpinningY = false;
-    isSpinningZ = false;
+    stopSpinning();
     init();
 }
 
@@ -427,6 +441,16 @@ function transformation() {
 
     isShapeLoaded = true;
 
+}
+
+function stopSpinning() {
+    isSpinningX = false;
+    isSpinningY = false;
+    isSpinningZ = false;
+}
+
+function isSpinning() {
+    return isSpinningX || isSpinningY || isSpinningZ;
 }
 
 
